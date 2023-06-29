@@ -21,11 +21,11 @@
         <v-main>
             <v-container class="container">
                 <template v-if="errorAddStudentForm">
-                    <v-alert time=5 icon="$vuetify" text="Lỗi không thể thêm sinh viên" type="error"
+                    <v-alert time=5 icon="$vuetify" text="Lỗi không thể thêm phòng ban" type="error"
                         variant="tonal"></v-alert>
                 </template>
                 <template v-if="successAddStudentForm">
-                    <v-alert icon="$vuetify" text="Đã thêm sinh viên thành công" type="success" variant="tonal"></v-alert>
+                    <v-alert icon="$vuetify" text="Đã thêm phòng ban thành công" type="success" variant="tonal"></v-alert>
                 </template>
 
                 <v-select v-model="selectedType" :items="types" label="Select Data Type" class="select"></v-select>
@@ -79,8 +79,6 @@
 
                 <template v-if="selectedType === 'students'">
                     <h2>Students</h2>
-
-
                     <div class="table-container">
                         <table>
                             <thead>
@@ -108,23 +106,50 @@
                             class="mt-4"></v-pagination>
                     </div>
                 </template>
+                <template v-if="selectedType === 'department'">
+                    <h2>Department</h2>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>ShortCut</th>
+                                    <th>Log version</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="department in departments.slice((currentPage - 1) * 10, currentPage * 10)"
+                                    :key="department.id">
+                                    <td>{{ department.ID }}</td>
+                                    <td>{{ department.NameVN }}</td>
+                                    <td>{{ department.Shortcut }}</td>
+                                    <td>{{ department.LogVersion }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
 
-                <template v-if="selectedType === 'add student'">
-                    <v-form ref="studentForm" v-model="valid">
-                        <v-text-field v-model="newStudent.id" label="ID"></v-text-field>
-                        <v-text-field v-model="newStudent.name" label="Name"></v-text-field>
-                        <v-text-field v-model="newStudent.classId" label="Class ID"></v-text-field>
-                        <v-text-field v-model="newStudent.age" label="Age"></v-text-field>
-                        <v-text-field v-model="newStudent.address" label="Address"></v-text-field>
+                        <v-pagination v-model="currentPage" :length="Math.ceil(departments.length / 10)" :total-visible="5"
+                            class="mt-4"></v-pagination>
+                    </div>
+                </template>
+
+                <template v-if="selectedType === 'add department'">
+                    <v-form ref="abc" v-model="valid">
+                        <v-text-field v-model="newDepartment.NameVN" label="Name VN"></v-text-field>
+                        <v-text-field v-model="newDepartment.NameJP" label="Name JP"></v-text-field>
+                        <v-text-field v-model="newDepartment.NameEN" label="Name EN"></v-text-field>
+                        <v-text-field v-model="newDepartment.CreatedBy" label="Created By"></v-text-field>
                     </v-form>
-                    <v-btn color="primary" @click="addStudent">Add Student</v-btn>
+                    <v-btn color="primary" @click="addDepartment">Add Department</v-btn>
+                    
 
                 </template>
-                <template v-if="selectedType === 'delete student'">
+                <template v-if="selectedType === 'delete department'">
                     <v-form ref="abc" v-model="valid">
-                        <v-text-field v-model="oldStudent.id" label="ID"></v-text-field>
+                        <v-text-field v-model="oldDepartment.id" label="ID"></v-text-field>
                     </v-form>
-                    <v-btn color="primary" @click="deleteStudent(oldStudent.id)">Delete Student</v-btn>
+                    <v-btn color="primary" @click="deleteDepartment(oldDepartment.id)">Delete Student</v-btn>
                 </template>
 
 
@@ -139,7 +164,7 @@ import axios from 'axios';
 import { computed, toRef } from 'vue';
 
 const selectedType = ref('');
-const types = ['teachers', 'classes', 'students', 'add student', 'delete student'];
+const types = ['teachers', 'classes', 'students','department', 'add department', 'delete department'];
 onMounted(() => {
     const stored = localStorage.getItem('selectedType');
     if (stored) {
@@ -149,31 +174,28 @@ onMounted(() => {
 const teachers = ref<any[]>([]);
 const classes = ref<any[]>([]);
 const students = ref<any[]>([]);
+const departments = ref<any[]>([]);
 const currentPage = ref(1);
-const totalStudent = computed(() => {
-    return students.value.length
-})
 
-const nextID = computed(() => {
-    return students.value.length + 1
-})
 
-let key = ref(toRef(totalStudent));
-let key1 = ref(toRef(nextID));
-let showForm = ref(false)
-let errorAddStudentForm = ref(false)
+
+let key = ref(0);
+let showForm = ref(true)
+let errorAddStudentForm = ref(true)
 let successAddStudentForm = ref(false)
 let notify = ref(false)
-const newStudent = ref({
-    id: key1,
-    name: '',
-    classId: 1,
-    age: 1,
-    address: ''
+const newDepartment = ref({
+    NameVN: "Nguyễn Mạnh Thuyên",
+    NameEN: "Thuyen",
+    NameJP: "部門名",
+    Shortcut: "CGMT",
+    CreatedBy: "who?",
+    UpdatedBy: "time?",
+    DeletedBy: "???"
 });
 
 
-const oldStudent = ref({
+const oldDepartment = ref({
     id: key,
 });
 
@@ -210,7 +232,16 @@ const loadData = () => {
                 console.error(error);
             });
     }
-
+    else if (selectedType.value === 'department') {
+        axios
+            .get('http://127.0.0.1:3030/tbl', {})
+            .then((response: { data: any[] }) => {
+                departments.value = response.data;
+            })
+            .catch((error: any) => {
+                console.error(error);
+            });
+    }
 };
 
 const notifyHidden = () => {
@@ -218,11 +249,11 @@ const notifyHidden = () => {
     errorAddStudentForm.value = false;
 }
 
-const addStudent = () => {
+const addDepartment = () => {
     axios
-        .post('http://127.0.0.1:3030/users/students', newStudent.value)
+        .post('http://127.0.0.1:3030/tbl', newDepartment.value)
         .then((response) => {
-            console.log("Thanh cong ", newStudent.value)
+            console.log("Thanh cong ", newDepartment.value)
             loadData();
             if (notify.value === false) successAddStudentForm.value = true;
             else {
@@ -230,17 +261,19 @@ const addStudent = () => {
                 successAddStudentForm.value = true;
                 notify.value = true;
             }
-            newStudent.value = {
-                id: key1.value,
-                name: '',
-                classId: 1,
-                age: 1,
-                address: ''
+            newDepartment.value = {
+                NameVN: "saadaisodasidsadisapdasdas",
+                NameEN: "cvxvxc",
+                NameJP: "部門名",
+                Shortcut: "DzzxT",
+                CreatedBy: "Người tạo",
+                UpdatedBy: "dsa",
+                DeletedBy: "ádsad"
             };
             showForm.value = false;
         })
         .catch((error) => {
-            console.log("that bat ", newStudent.value)
+            console.log("that bat ", newDepartment.value)
             console.error(error);
             if (notify.value === false) errorAddStudentForm.value = true;
             else {
@@ -251,9 +284,9 @@ const addStudent = () => {
         });
 }
 
-const deleteStudent = (studentID: any) => {
+const deleteDepartment = (studentID: any) => {
     axios
-        .delete(`http://127.0.0.1:3030/users/students/${studentID}`)
+        .delete(`http://127.0.0.1:3030/tbl/${studentID}`)
         .then(response => () => {
             loadData();
             reloadPage();

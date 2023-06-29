@@ -4,7 +4,6 @@ import (
 	"api/config"
 	"api/database"
 	"api/modules"
-	"api/routes"
 	"fmt"
 	"log"
 	"os"
@@ -48,8 +47,8 @@ func main() {
 		return
 	}
 
-	// Init router
-	routes.InitRoutes(app)
+	// // Init router
+	// routes.InitRoutes(app)
 	modules.InitRoutes(app)
 
 	// Handle Error

@@ -35,6 +35,10 @@ type UserProfile struct {
 	DeletedAt       *time.Time `json:"-"`
 }
 
+func (User) TableName() string {
+	return "user"
+}
+
 func (UserProfile) TableName() string {
 	return "user_profile"
 }
@@ -69,7 +73,4 @@ func HashPassword(password string) string {
 
 func CheckPasswordHash(hashedPassword, password string) error {
 	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
-}
-func (User) TableName() string {
-	return "tbl_user"
 }

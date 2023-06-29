@@ -3,15 +3,16 @@ package controller
 import (
 	"api/database"
 	"api/modules/tbl/model"
-
+	"errors"
 
 	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
 )
 
 func GetTbl(c *fiber.Ctx) error {
 	db := database.DB
 	var tbl []model.Tbl
-		if err := db.Find(&tbl).Error; err != nil {
+		if err := db.Unscoped().Find(&tbl).Error; err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": "Failed to retrieve tbl",
 			})
@@ -23,7 +24,7 @@ func GetTbl(c *fiber.Ctx) error {
 func GetTblByID(c *fiber.Ctx) error {
 	db := database.DB
 	var tbl model.Tbl
-		if err := db.First(&tbl, c.Params("id")).Error; err != nil {
+		if err := db.Unscoped().First(&tbl, c.Params("id")).Error; err != nil {
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 				"error": "Teacher not found",
 			})
@@ -80,20 +81,25 @@ func UpdateTbl(c *fiber.Ctx) error {
 func DeleteTblByID(c *fiber.Ctx) error {
 	db := database.DB
 	var tbl model.Tbl
-		if err := db.First(&tbl, c.Params("id")).Error; err != nil {
+	if err := db.First(&tbl, c.Params("id")).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 				"error": "tbl_department not found",
 			})
 		}
-
-		if err := db.Delete(&tbl).Error; err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": "Failed to delete tbl_department",
-			})
-		}
-
-		return c.JSON(fiber.Map{
-			"message": "tbl_department deleted",
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to retrieve tbl_department",
 		})
+	}
+
+	if err := db.Delete(&tbl).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to delete tbl_department",
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"message": "tbl_department deleted",
+	})
 }
 

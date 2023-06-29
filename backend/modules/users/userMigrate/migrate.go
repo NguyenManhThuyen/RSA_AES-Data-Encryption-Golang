@@ -2,7 +2,7 @@ package userMigrate
 
 import (
 	"api/database"
-	model "api/modules/user/model"
+	model "api/modules/users/model"
 )
 
 func MigrateUser() bool {

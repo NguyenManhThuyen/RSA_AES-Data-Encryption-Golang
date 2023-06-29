@@ -6,7 +6,7 @@ import (
 	"api/modules/student/studentmigrate"
 	"api/modules/tbl/tblMigrate"
 	"api/modules/teachers/teacherMigrate"
-	"api/modules/user/userMigrate"
+	"api/modules/users/userMigrate"
 )
 
 func MigrateModule() bool {
